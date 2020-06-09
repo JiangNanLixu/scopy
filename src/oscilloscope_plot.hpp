@@ -101,6 +101,7 @@ namespace adiscope {
 		void removeOffsetWidgets(int chnIdx);
 		void removeLeftVertAxis(unsigned int axis);
 
+        QList<Measure *>* getMeasurements();
 		void measure();
 		int activeMeasurementsCount(int chnIdx);
 		QList<std::shared_ptr<MeasurementData>> measurements(int chnIdx);
@@ -135,6 +136,7 @@ namespace adiscope {
 
 		void setConversionFunction(const std::function<double(unsigned int, double, bool)> &fp);
 
+        QList<Measure *> getMeasureObjs();
 	Q_SIGNALS:
 		void timeTriggerValueChanged(double);
 		void channelOffsetChanged(unsigned int, double);
@@ -202,6 +204,7 @@ namespace adiscope {
 
 		void onTriggerAHandleGrabbed(bool);
 		void onTriggerBHandleGrabbed(bool);
+
 
 	private:
 		std::function<double(unsigned int, double, bool)> m_conversion_function;
@@ -274,7 +277,7 @@ namespace adiscope {
 	        QList<Measure *> d_measureObjs;
 
 		double value_v1, value_v2, value_h1, value_h2;
-		double value_gateLeft, value_gateRight;
+        double value_gateLeft, value_gateRight;
 		double d_minOffsetValue, d_maxOffsetValue;
 		double d_timeTriggerMinValue, d_timeTriggerMaxValue;
 

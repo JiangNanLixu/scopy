@@ -44,6 +44,7 @@
 #include <libm2k/analog/m2kanalogin.hpp>
 #include <libm2k/m2k.hpp>
 #include <libm2k/generic.hpp>
+#include <measure.h>
 
 extern "C" {
 	struct iio_buffer;
@@ -54,6 +55,7 @@ extern "C" {
 
 namespace Ui {
 class SpectrumAnalyzer;
+class MeasurementsPanel;
 }
 
 namespace adiscope {
@@ -61,6 +63,11 @@ class SpectrumChannel;
 class Filter;
 class ChannelWidget;
 class DbClickButtons;
+
+
+class MeasurementData;
+class MeasurementGui;
+class MeasureSettings;
 }
 
 class QPushButton;
@@ -116,6 +123,16 @@ private Q_SLOTS:
 	void on_btnSettings_clicked(bool checked);
 	void on_btnSweep_toggled(bool checked);
 	void on_btnMarkers_toggled(bool checked);
+    void on_btnMeasure_toggled(bool);
+    void on_boxMeasure_toggled(bool);
+
+    //Pt masuratori!!!!!!!!!!!!!!!
+    void onMeasuremetsAvailable();
+
+//    void onMeasurementActivated(int id, int chnIdx);
+//    void onMeasurementDeactivated(int id, int chnIdx);
+    void onMeasurementSelectionListChanged();
+
 	void on_comboBox_type_currentIndexChanged(const QString&);
 	void on_comboBox_window_currentIndexChanged(const QString&);
 	void on_spinBox_averaging_valueChanged(int);
@@ -189,6 +206,16 @@ private:
 	libm2k::context::Generic* m_generic_context;
 	libm2k::analog::GenericAnalogIn* m_generic_analogin;
 	Ui::SpectrumAnalyzer *ui;
+
+
+
+    QWidget *measurePanel;
+    Ui::MeasurementsPanel *measure_panel_ui;
+    adiscope::MeasureSettings *measure_settings;
+    QList<std::shared_ptr<MeasurementData>> measurements_data;
+    QList<std::shared_ptr<MeasurementGui>> measurements_gui;
+    QList<Measure *> d_measureObjs;
+
 	adiscope::DbClickButtons *marker_selector;
 
 	QButtonGroup *settings_group;
@@ -237,6 +264,24 @@ private:
 	ChannelWidget *getChannelWidgetAt(unsigned int id);
 	void updateMarkerMenu(unsigned int id);
 	bool isIioManagerStarted() const;
+
+
+
+    //din capture plot
+    QList<std::shared_ptr<MeasurementData>> measurements(int chnIdx);
+    std::shared_ptr<MeasurementData> measurement(int id, int chnIdx);
+    void measure();
+    int activeMeasurementsCount(int chnIdx);
+    Measure* measureOfChannel(int chnIdx) const;
+
+    //functii normale
+    void measure_panel_init();
+    void init_selected_measurements(int, std::vector<int>);
+    void measureUpdateValues();
+    void measure_settings_init();
+    void measureLabelsRearrange();
+    void measureCreateAndAppendGuiFrom(const MeasurementData&);
+
 };
 
 class SpectrumChannel: public QObject

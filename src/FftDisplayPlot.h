@@ -85,8 +85,9 @@ namespace adiscope {
 		QList<QList<marker>> d_markers;
 		double* x_data;
 		std::vector<double*> y_data;
+    public:
 		std::vector<double*> y_original_data;
-
+    private:
 		std::vector<double> y_scale_factor;
 
 		double d_start_frequency;

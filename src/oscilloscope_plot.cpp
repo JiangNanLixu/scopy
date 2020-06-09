@@ -553,6 +553,11 @@ CapturePlot::~CapturePlot()
 	delete rightGate;
 }
 
+QList<Measure *>* CapturePlot::getMeasurements()
+{
+    return &d_measureObjs;
+}
+
 HorizBar *CapturePlot::levelTriggerA()
 {
 	return d_levelTriggerABar;
@@ -1028,6 +1033,11 @@ void CapturePlot::enableLabels(bool enabled)
 {
 	d_labelsEnabled = enabled;
 	enableColoredLabels(enabled);
+}
+
+QList<Measure *> CapturePlot::getMeasureObjs()
+{
+    return d_measureObjs;
 }
 
 void CapturePlot::enableAxisLabels(bool enabled)

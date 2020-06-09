@@ -22,6 +22,7 @@
 
 #include <QWidget>
 #include <memory>
+#include <measure.h>
 
 namespace Ui {
 	class MeasureSettings;
@@ -76,7 +77,8 @@ class MeasureSettings : public QWidget
 	Q_OBJECT
 
 public:
-	explicit MeasureSettings(CapturePlot *plot, QWidget *parent = 0);
+
+    explicit MeasureSettings(QList<Measure *>* measures_list, QWidget *parent = 0);
 	~MeasureSettings();
 
 	QString channelName() const;
@@ -132,6 +134,7 @@ private Q_SLOTS:
 
 private:
 	void deleteAllMeasurements();
+    Measure* measureOfChannel(int chnIdx) const;
 	void recoverAllMeasurements();
 	void displayAllMeasurements();
 	void disableDisplayAllMeasurements();
@@ -162,7 +165,8 @@ private:
 	bool m_are_dropdowns_filled;
 	bool m_enableDisplayAll;
 
-	CapturePlot* m_plot;
+    QList<Measure *>* m_measures_list;
+
 	int m_selectedChannel;
 	QList<MeasurementItem> m_selectedMeasurements;
 	QList<MeasurementItem> m_deleteAllBackup;
