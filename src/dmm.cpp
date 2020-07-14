@@ -30,6 +30,8 @@
 #include <gnuradio/blocks/rms_ff.h>
 #include <gnuradio/blocks/short_to_float.h>
 #include <gnuradio/blocks/sub.h>
+#include <gnuradio/blocks/skiphead.h>
+#include <gnuradio/blocks/delay.h>
 #include <gnuradio/filter/dc_blocker_ff.h>
 
 #include <boost/make_shared.hpp>
@@ -70,7 +72,7 @@ DMM::DMM(struct iio_context *ctx, Filter *filt, ToolMenuItem *toolMenuItem,
 	ui->setupUi(this);
 
 	/* TODO: avoid hardcoding sample rate */
-	sample_rate = 1e6;
+	sample_rate = 1e4;
 
 	ui->sismograph_ch1->setColor(QColor("#ff7200"));
 	ui->sismograph_ch2->setColor(QColor("#9013fe"));
@@ -327,9 +329,14 @@ gr::basic_block_sptr DMM::configureGraph(gr::basic_block_sptr s2f,
 			is_high_ac ? (sample_rate / 10.0) : 1000.0);
 
 	/* TODO: figure out best value for the blocker parameter */
-	auto blocker = gr::filter::dc_blocker_ff::make(1000, true);
+	auto blocker_val = 32;
+	auto skip_delay = (blocker_val *2 -2);
+	auto blocker = gr::filter::dc_blocker_ff::make(blocker_val, true);
+	auto skiphead = gr::blocks::skiphead::make(sizeof(float), skip_delay);
 
 	manager->connect(s2f, 0, blocker, 0);
+	//manager->connect(blocker,0,skiphead,0);
+
 
 	if (is_low_ac || is_high_ac) {
 		/* TODO: figure out best value for the RMS parameter */
@@ -339,10 +346,14 @@ gr::basic_block_sptr DMM::configureGraph(gr::basic_block_sptr s2f,
 		manager->connect(rms, 0, keep_one, 0);
 	} else {
 		auto sub = gr::blocks::sub_ff::make();
+		auto delay = gr::blocks::delay::make(sizeof(float), skip_delay);
 
-		manager->connect(s2f, 0, sub, 0);
+		manager->connect(s2f, 0, delay, 0);
+		manager->connect(delay, 0, sub, 0);
 		manager->connect(blocker, 0, sub, 1);
-		manager->connect(sub, 0, keep_one, 0);
+		auto moving = gr::blocks::moving_average_ff::make(1000,1.0/1000);
+		manager->connect(sub, 0, moving,0 );
+		manager->connect(moving, 0, keep_one, 0);
 	}
 
 	return keep_one;
@@ -363,9 +374,9 @@ void DMM::configureModes()
 	} else {
 		/* Low-frequency AC: decimate data rate */
 		auto keep_one1 = gr::blocks::keep_one_in_n::make(
-				sizeof(short), sample_rate / 1e4);
+				sizeof(short), 1/*sample_rate / 1e3*/);
 		id_ch1 = manager->connect(keep_one1, 0, 0, false,
-				sample_rate / 10);
+				1000);
 
 		manager->connect(keep_one1, 0, s2f1, 0);
 	}
@@ -375,9 +386,9 @@ void DMM::configureModes()
 	} else {
 		/* Low-frequency AC: decimate data rate */
 		auto keep_one2 = gr::blocks::keep_one_in_n::make(
-				sizeof(short), sample_rate / 1e4);
+				sizeof(short), 1/*sample_rate / 1e3*/);
 		id_ch2 = manager->connect(keep_one2, 1, 0, false,
-				sample_rate / 10);
+				1000);
 
 		manager->connect(keep_one2, 0, s2f2, 0);
 	}
@@ -641,6 +652,7 @@ void DMM::writeAllSettingsToHardware()
 	if (m_m2k_analogin) {
 		try {
 			m_m2k_analogin->setSampleRate(sample_rate);
+			m_m2k_analogin->setOversamplingRatio(1);
 			auto trigger = m_m2k_analogin->getTrigger();
 			for (unsigned int i = 0; i < m_adc_nb_channels; i++) {
 				auto chn = static_cast<libm2k::analog::ANALOG_IN_CHANNEL>(i);
